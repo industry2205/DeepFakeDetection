@@ -9,26 +9,6 @@ import glob
 from sklearn.metrics import log_loss
 import tensorflow as tf
 
-# Keras
-# import keras.backend as K
-# from keras.models import load_model
-# from keras import models,Sequential,layers
-# from keras.models import Model, Input
-# from keras.layers import Conv2D, SeparableConv2D, Dense, MaxPooling2D, GlobalAveragePooling2D, AveragePooling2D, DepthwiseConv2D
-# from keras.layers import Activation, BatchNormalization, Dropout, Flatten, Reshape, ReLU, Dense, multiply, Softmax, Flatten, Input
-# from keras.layers import Add, Input
-# from keras.utils import to_categorical
-# from keras.callbacks import Callback
-# from keras.optimizers import SGD,Adam
-# from keras.regularizers import l2
-# from keras.datasets import cifar10
-
-# from sklearn.ensemble import RandomForestClassifier
-
-
-# In[ ]:
-
-
 # 전처리 데이터를 불러오기 위한 Directory 지정
 all_train_dirs = glob.glob('/kaggle/input/all-data/dfdc_train_part/' + 'dfdc_train_part_*')
 
