@@ -1,14 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
 get_ipython().system("pip install '/kaggle/input/efficientnet/efficientnet-1.0.0-py3-none-any.whl'")
-
-
-# In[ ]:
-
 
 import numpy as np
 from PIL import Image
@@ -27,26 +17,17 @@ from tensorflow.keras.models import load_model
 from keras.regularizers import l2
 import tensorflow as tf
 
-
-# In[ ]:
-
-
 # Numpy 데이터 불러오기 (이미지, 라벨이 묶여서 저장되어 있음)
 arr = np.load('/kaggle/input/newdata/new_data_side.npz','r')
 
-# X = arr['arr_0']
-# y = arr['arr_1']
+X = arr['arr_0']
+y = arr['arr_1']
 
-X = np.r_[arr['arr_0'][:10],arr['arr_0'][13000:13010]]
-y = np.r_[arr['arr_1'][:10],arr['arr_1'][13000:13010]]
-
+# X = np.r_[arr['arr_0'][:10000],arr['arr_0'][13000:23000]]
+# y = np.r_[arr['arr_1'][:10000],arr['arr_1'][13000:23000]]
 
 # 메모리 줄이기 위해 사용
 del arr
-
-
-# In[ ]:
-
 
 # Data Shuffle
 
@@ -55,10 +36,6 @@ np.random.shuffle(s)
 
 X = X[s]
 y = y[s]
-
-
-# In[ ]:
-
 
 #---------------------------------------------------------------------------------------------------
 # Data augumentation 사용하지 않고 훈련
@@ -125,14 +102,14 @@ logloss = log_loss(y_test,y_pred)
 print(logloss)
 
 
-# In[ ]:
-
-
 # ---------------------------------------------------------------------------------------------
 # Data Augumentaion 사용하여 훈련
 
 from sklearn.model_selection import train_test_split
 X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.25, random_state=321)
+
+del X
+del y
 
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
@@ -147,7 +124,7 @@ train_datagen = ImageDataGenerator(
     fill_mode="nearest",
 )
 
-# Note that the validation data should not be augmented!
+# Validation Set은 Data augumentation 안함
 test_datagen = ImageDataGenerator(rescale=1.0 / 255)
 
 # flow_from_directory는 폴더를 지정해주지만, flow는 데이터를 직접 입력시킨다
@@ -164,7 +141,7 @@ validation_generator = test_datagen.flow(
     batch_size=128,
 )
 
-# train_generator 안에 augmentation 된 데이터들이 들어있음 
+# fit_generator를 이용하여 훈련
 model.compile(optimizer=Adam(lr=0.0001), loss='binary_crossentropy', metrics=['accuracy'])
 history = model.fit_generator(
     train_generator,
@@ -173,4 +150,3 @@ history = model.fit_generator(
     validation_data = validation_generator,
     validation_steps = 7
 )
-
