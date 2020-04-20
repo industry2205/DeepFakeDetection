@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
 import numpy as np
 import pandas as pd
 import random
@@ -24,9 +18,6 @@ sys.path.append(package_path)
 from efficientnet_pytorch import EfficientNet
 
 
-# In[ ]:
-
-
 # Data 불러오기
 arr = np.load('/kaggle/input/datafacial/data_facial.npz')
 
@@ -40,7 +31,6 @@ y = arr['arr_1'][:25000]
 
 del arr
 
-
 # Data Shuffle
 s = np.arange(X.shape[0])
 np.random.shuffle(s)
@@ -48,17 +38,9 @@ np.random.shuffle(s)
 X = X[s]
 y = y[s]
 
-
-# In[ ]:
-
-
 X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.3, random_state=1)
 del X
 del y
-
-
-# In[ ]:
-
 
 # Data Augmentation 사용
 # Numpy 형식을 Tensor 형식으로 변환하기 위해 사용
@@ -96,16 +78,10 @@ transform_train = ImageTransform_train(img_size, mean, std)
 transform_val = ImageTransform_val(img_size, mean, std)
 
 
-# In[ ]:
-
-
 # Log_loss 값 계산 시 사용
 train_len = len(X_train)
 val_len = len(X_val)
 dataset_sizes = {'train':train_len,'val':val_len}
-
-
-# In[ ]:
 
 
 # Numpy를 transforms 함수를 이용하여 Tensor로 변환하기 위하여,
@@ -137,9 +113,6 @@ del X_val
 
 y_train = torch.from_numpy(y_train).float()
 y_val = torch.from_numpy(y_val).float()
-
-
-# In[ ]:
 
 
 # DataLoader 함수를 사용하여 Data를 묶어줌
@@ -176,9 +149,6 @@ val_loader = DataLoader(dataset=valset,batch_size=64,shuffle=True)
 dataloders = {'train':train_loader,'val':val_loader}
 
 
-# In[ ]:
-
-
 # Trained model의 Weights를 사용하기 위하여 경로 지정
 weight_path = 'advprop_efficientnet-b0.pth'
 trained_weights_path = os.path.join('../input/efficientnetpytorch/EfficientNet-PyTorch/efficientnet_weights', weight_path)
@@ -191,18 +161,12 @@ model.load_state_dict(torch.load(trained_weights_path, map_location=torch.device
 model._fc = nn.Linear(model._fc.in_features, out_features=1)
 
 
-# In[ ]:
-
-
 # # Layer를 지정하여 해당 위치까지 Weights를 고정시킴 (Transfer Learning 시 사용)
 # for i,param in enumerate(model.parameters()):
 #     param.requires_grad = False
 #     print(i)
 #     if i == 50:
 #         break
-
-
-# In[ ]:
 
 
 # # FC Layer에 추가적으로 Dense를 더함 (Transfer Learning 시 사용)
@@ -215,12 +179,7 @@ model._fc = nn.Linear(model._fc.in_features, out_features=1)
 # #         nn.Dropout(0.8),
 #         nn.Linear(128,1)
 # 		)
-
 # model._fc = fc
-
-
-# In[ ]:
-
 
 def train_model(model, criterion, optimizer,  num_epochs=25):
     since = time.time()
@@ -274,14 +233,9 @@ def train_model(model, criterion, optimizer,  num_epochs=25):
 
     return model
 
-
-# In[ ]:
-
-
 optimizer = optim.Adam(model.parameters(),lr=0.00002)
 criterion = nn.BCEWithLogitsLoss()
 num_epochs = 100
 model = model.cuda()
 
 model_ft = train_model(model, criterion, optimizer,num_epochs=90)
-
