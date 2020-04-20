@@ -43,7 +43,6 @@ y = y[s]
 # Data Split
 from sklearn.model_selection import train_test_split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=321)
-
 del X
 del y
 
@@ -190,24 +189,6 @@ def Xception(model_input, classes):
     model = Model(model_input, model_output, name='Xception')
     return model
 
-class LearningRateSchedule(Callback):
-    def on_epoch_end(self, epoch, logs=None):
-        if (epoch+1)%2 == 0:
-            lr = K.get_value(self.model.optimizer.lr)
-            K.set_value(self.model.optimizer.lr, lr*0.94)
-
-input_shape = (160, 160, 3)
-
-# X_train = X_train.astype('float32')/255.
-# X_test = X_test.astype('float32')/255.
-
-# y_train = to_categorical(y_train, num_classes=2)
-# y_test = to_categorical(y_test, num_classes=2)
-
-model_input = Input(shape=input_shape)
-
-model = Xception(model_input,1)
-
 model.summary()
 
 class LearningRateSchedule(Callback):
@@ -215,7 +196,6 @@ class LearningRateSchedule(Callback):
         if (epoch+1)%2 == 0:
             lr = K.get_value(self.model.optimizer.lr)
             K.set_value(self.model.optimizer.lr, lr*0.94)
-
 
 X_train = X_train.astype('float32')/255.
 X_test = X_test.astype('float32')/255.
@@ -240,7 +220,8 @@ model.fit(X_train, y_train, batch_size=64, epochs=40, validation_split=0.25, cal
 # logloss = log_loss(y_test,y_pred)
 # print(logloss)
 
-# Ensenble 사용------------------------------------------------------
+# ------------------------------------------------------
+# Ensenble 사용
 # 지정된 Layer의 Predict를 계산하기 위해, Layer 위치를 지정해 줌
 first_output = model.layers[-3].output
 model = tf.keras.models.Model(inputs=model.input, outputs=first_output)
