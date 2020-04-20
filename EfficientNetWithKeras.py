@@ -1,5 +1,4 @@
 get_ipython().system("pip install '/kaggle/input/efficientnet/efficientnet-1.0.0-py3-none-any.whl'")
-
 import numpy as np
 from PIL import Image
 import random
@@ -30,28 +29,17 @@ y = arr['arr_1']
 del arr
 
 # Data Shuffle
-
 s = np.arange(X.shape[0])
 np.random.shuffle(s)
 
 X = X[s]
 y = y[s]
 
-#---------------------------------------------------------------------------------------------------
-# Data augmentation 사용하지 않고 훈련
-
-from sklearn.model_selection import train_test_split
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=321)
-
-del X
-del y
-
-# 현재 Cell에서 Training과 Transfer Learning 진행
+# Model 생성-----------------------------------------------------------
+# 직접 Training과 Transfer Learning 두 가지를 진행
 # FC 추가, CNN 추가 등 조건을 바꿔가며 실험
-
 EfficientNetB5 = efn.EfficientNetB5(weights=None, include_top=False, input_shape=(224, 224, 3))
 EfficientNetB0.load_weights('../input/efficientnet-keras-noisystudent-weights-b0b7/efficientnet-b0_noisy-student_notop.h5')
-
 
 inputs = Input(shape = (224,224,3))
 x = EfficientNetB5(inputs)
@@ -81,14 +69,19 @@ model.summary()
 # for layer in model.layers[:2]:
 #     layer.trainable = False
 
-model.summary()
+#---------------------------------------------------------------------------------------------------
+# Data augmentation 사용하지 않고 훈련
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=321)
+
+del X
+del y
 
 from keras.callbacks import ModelCheckpoint
 checkpointer = ModelCheckpoint(filepath = 'Efficient_facial_best.hdf5',verbose=1,save_best_only=True)
 
 # optimizer = SGD(lr=0.0007, momentum=0.9)
-# optimizer = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=10e-8, decay=1e-7, amsgrad=False)
-optimizer = Adam(lr=0.000007)
+optimizer = Adam(lr=0.000007, beta_1=0.9, beta_2=0.999, epsilon=10e-8, decay=1e-7, amsgrad=False)
 
 model.compile(optimizer, loss='binary_crossentropy', metrics=['acc'])
 
@@ -104,7 +97,6 @@ print(logloss)
 
 # ---------------------------------------------------------------------------------------------
 # Data Augumentaion 사용하여 훈련
-
 from sklearn.model_selection import train_test_split
 X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.25, random_state=321)
 
