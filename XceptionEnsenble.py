@@ -1,50 +1,28 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
 import os
+import glob
 from PIL import Image
 import cv2, sys, re
 import pandas as pd
 import numpy as np
 import random
+import tensorflow as tf
 from keras import models,Sequential,layers
-from keras.models import Model, Input
-from keras.layers import Conv2D, SeparableConv2D, Dense, MaxPooling2D, GlobalAveragePooling2D, AveragePooling2D
-from keras.layers import Activation, BatchNormalization, Dropout, Flatten, Reshape
-from keras.layers import Add
+from keras.models import Model, Input, load_model
+from keras.layers import Conv2D, SeparableConv2D, Dense, MaxPooling2D, GlobalAveragePooling2D, AveragePooling2D, DepthwiseConv2D
+from keras.layers import Activation, BatchNormalization, Dropout, Flatten, Reshape, Dense, Softmax, multiply, Add, Input, ReLU
+from keras.layers import GlobalMaxPooling2D, Permute, Concatenate, Lambda
 from keras.utils import to_categorical
 from keras.callbacks import Callback
 from keras.optimizers import SGD,Adam
 from keras.regularizers import l2
-from keras.datasets import cifar10
-import numpy as np
-import keras.backend as K
 from sklearn.metrics import log_loss
-import glob
-from keras.models import load_model
-import tensorflow as tf
-from sklearn.ensemble import RandomForestClassifier
-
-import tensorflow as tf
-
 from keras import backend as K
-from keras.models import Model
-
-from keras.layers import Conv2D, BatchNormalization, ReLU, DepthwiseConv2D, Activation, Input, Add
-from keras.layers import GlobalAveragePooling2D, Reshape, Dense, multiply, Softmax, Flatten
-
-# ** to update custom Activate functions
-from keras.utils.generic_utils import get_custom_objects
-
-
-# In[ ]:
+from keras.activations import sigmoid
 
 
 # Numpy 데이터 불러오기 (이미지, 라벨이 묶여서 저장되어 있음)
-arr = np.load('/kaggle/input/newdata/new_data_side.npz','r')
+arr = np.load('/kaggle/input/newdata/new_data_facial.npz','r')
+# arr = np.load('/kaggle/input/newdata/new_data_side.npz','r')
 
 X = arr['arr_0']
 y = arr['arr_1']
@@ -56,30 +34,20 @@ y = arr['arr_1']
 del arr
 
 # Data Shuffle
-
 s = np.arange(X.shape[0])
 np.random.shuffle(s)
 
 X = X[s]
 y = y[s]
 
+# Data Split
 from sklearn.model_selection import train_test_split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=321)
 
 del X
 del y
 
-
-# In[9]:
-
-
 # cBam(SelfAttention)을 추가할 때 사용
-
-from keras.layers import GlobalAveragePooling2D, GlobalMaxPooling2D, Reshape, Dense, multiply, Permute, Concatenate, Conv2D, Add, Activation, Lambda
-from keras import backend as K
-from keras.activations import sigmoid
-
-
 def cbam_block(cbam_feature, ratio=8):
 	cbam_feature = channel_attention(cbam_feature, ratio)
 	cbam_feature = spatial_attention(cbam_feature)
@@ -153,14 +121,9 @@ def spatial_attention(input_feature):
 		cbam_feature = Permute((3, 1, 2))(cbam_feature)
 		
 	return multiply([input_feature, cbam_feature])
+
 # ----------------------------------------------------------
-
-
-# In[11]:
-
-
 # Xception Model
-
 def conv2d_bn(x, filters, kernel_size, padding='same', strides=1, activation='relu', weight_decay=1e-5):
     x = Conv2D(filters, kernel_size, padding=padding, strides=strides, kernel_regularizer=l2(weight_decay))(x)
     x = BatchNormalization()(x)
@@ -277,31 +240,19 @@ model.fit(X_train, y_train, batch_size=64, epochs=40, validation_split=0.25, cal
 # logloss = log_loss(y_test,y_pred)
 # print(logloss)
 
-
-# In[ ]:
-
-
 # Ensenble 사용------------------------------------------------------
-
 # 지정된 Layer의 Predict를 계산하기 위해, Layer 위치를 지정해 줌
 first_output = model.layers[-3].output
 model = tf.keras.models.Model(inputs=model.input, outputs=first_output)
 a = model.predict(A)
-print(a.shape)
 
 b = []
 for i in range(len(a)):
     b.append(a[i].flatten())
 b = np.array(b)
-print(b.shape)
-
 c = B.reshape(-1,)
 
-
-# In[ ]:
-
-
-# Ex)10X10 Feature를 Flatten하기 위해 아래 함수 사용
+# Ex) 10X10 Feature를 Flatten하기 위해 아래 함수 사용
 def make_feature(data_set, feature_num):
     feature_size = a.shape[1]*a.shape[2]
     data_set = data_set[:,:feature_size*feature_num]
@@ -330,11 +281,7 @@ del c
 del A
 del B
 
-
-# In[ ]:
-
-
-# RandomForest Model
+# RandomForest Model--------------------------
 from sklearn.ensemble import RandomForestClassifier
 
 rf = RandomForestClassifier(n_estimators = 50, random_state = 0,max_features=1, bootstrap=False)
@@ -344,11 +291,7 @@ y_pred = rf.predict_proba(X_test)
 logloss = log_loss(y_test,y_pred)
 print(logloss)
 
-
-# In[ ]:
-
-
-# Lightgbm Model
+# Lightgbm Model------------------------------
 import lightgbm as lgb
 
 train_ds = lgb.Dataset(X_train, label = y_train) 
@@ -360,7 +303,7 @@ params = {'learning_rate': 0.01,
           'objective': 'binary',
           'metric': 'binary',
           'is_training_metric': True,
-#           'feature_fraction': 1,
+          'feature_fraction': 1,
           'bagging_fraction': 0.7,
           'save_binary':True,
           'scale_pos_weight':1.2,
@@ -370,4 +313,3 @@ model = lgb.train(params, train_ds, 3000, val_ds, verbose_eval=100, early_stoppi
 y_pred = model.predict(X_test)
 logloss = log_loss(y_test,y_pred)
 print(logloss)
-
